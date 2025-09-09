@@ -1,0 +1,5 @@
+{
+  "buildCommand": "cd DIH.Presentation && npm run build",
+  "outputDirectory": "DIH.Presentation/.next",
+  "installCommand": "cd DIH.Presentation && npm install"
+}
