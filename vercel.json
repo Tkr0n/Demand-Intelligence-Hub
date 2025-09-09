@@ -1,5 +1,14 @@
 {
-  "buildCommand": "cd DIH.Presentation && npm run build",
-  "outputDirectory": "DIH.Presentation/.next",
-  "installCommand": "cd DIH.Presentation && npm install"
+  "builds": [
+    {
+      "src": "DIH.Presentation/next.config.mjs",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "DIH.Presentation/$1"
+    }
+  ]
 }
