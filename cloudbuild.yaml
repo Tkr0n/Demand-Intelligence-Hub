@@ -1,0 +1,141 @@
+# Cloud Build configuration for DIH monorepo
+# This file defines the CI/CD pipeline for Google Cloud Build
+
+steps:
+  # Build and deploy .NET API (Future)
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-api'
+    dir: 'DIH.Api'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/dih-api', '.']
+    waitFor: ['-']
+
+  # Push API image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-api'
+    args: ['push', 'gcr.io/$PROJECT_ID/dih-api']
+    waitFor: ['build-api']
+
+  # Build and deploy React Frontend
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'build-frontend'
+    dir: 'DIH.Presentation'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/dih-frontend', '.']
+    waitFor: ['-']
+
+  # Push Frontend image
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'push-frontend'
+    args: ['push', 'gcr.io/$PROJECT_ID/dih-frontend']
+    waitFor: ['build-frontend']
+
+  # Deploy API to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'deploy-api'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'dih-api'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/dih-api'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--set-env-vars'
+      - 'BIGQUERY_DATASET=$PROJECT_ID.dih_analytics'
+    waitFor: ['push-api']
+
+  # Deploy Frontend to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'deploy-frontend'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'dih-frontend'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/dih-frontend'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      - '--allow-unauthenticated'
+      - '--port'
+      - '3000'
+    waitFor: ['push-frontend']
+
+  # Deploy ETL Functions (Future)
+  # IronSource ETL Function
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'deploy-etl-ironsource'
+    dir: 'DIH.Infrastructure/ETL'
+    args:
+      - 'functions'
+      - 'deploy'
+      - 'dih-etl-ironsource'
+      - '--runtime'
+      - 'python39'
+      - '--trigger-http'
+      - '--source'
+      - './ironsource'
+      - '--entry-point'
+      - 'main'
+      - '--set-env-vars'
+      - 'BIGQUERY_DATASET=$PROJECT_ID.dih_analytics'
+    waitFor: ['-']
+
+  # AdMob ETL Function
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'deploy-etl-admob'
+    dir: 'DIH.Infrastructure/ETL'
+    args:
+      - 'functions'
+      - 'deploy'
+      - 'dih-etl-admob'
+      - '--runtime'
+      - 'python39'
+      - '--trigger-http'
+      - '--source'
+      - './admob'
+      - '--entry-point'
+      - 'main'
+      - '--set-env-vars'
+      - 'BIGQUERY_DATASET=$PROJECT_ID.dih_analytics'
+    waitFor: ['-']
+
+  # AppLovin ETL Function
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'deploy-etl-applovin'
+    dir: 'DIH.Infrastructure/ETL'
+    args:
+      - 'functions'
+      - 'deploy'
+      - 'dih-etl-applovin'
+      - '--runtime'
+      - 'python39'
+      - '--trigger-http'
+      - '--source'
+      - './applovin'
+      - '--entry-point'
+      - 'main'
+      - '--set-env-vars'
+      - 'BIGQUERY_DATASET=$PROJECT_ID.dih_analytics'
+    waitFor: ['-']
+
+# Configure Cloud Build settings
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
+
+# Substitutions for environment variables
+substitutions:
+  _REGION: 'us-central1'
+  _BIGQUERY_DATASET: 'dih_analytics'
+
+# Images to be pushed to Container Registry
+images:
+  - 'gcr.io/$PROJECT_ID/dih-api'
+  - 'gcr.io/$PROJECT_ID/dih-frontend'
+
+# Timeout for the entire build
+timeout: '1200s'

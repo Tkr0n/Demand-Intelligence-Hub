@@ -1,0 +1,256 @@
+# Cursor AI Rules for Demand Intelligence Hub (DIH)
+
+## Project Context
+This is a monorepo for the Demand Intelligence Hub, focused on ad network optimization and demand analysis. The project follows Clean Architecture principles with multiple technology stacks.
+
+## Technology Stack & Architecture
+- **Frontend**: React/Next.js 14 with TypeScript, Tailwind CSS, shadcn/ui
+- **Backend**: .NET APIs with Clean Architecture (Api, Application, Domain, Infrastructure)
+- **ETL**: Python for data processing
+- **Package Manager**: pnpm for frontend, dotnet for .NET, pip for Python
+- **Architecture**: Clean Architecture with clear separation of concerns
+
+## Code Organization Rules
+
+### Directory Structure
+```
+DIH/
+├── DIH.Api/          # .NET Web APIs
+├── DIH.Application/  # Application services (.NET)
+├── DIH.Domain/       # Domain models (.NET)
+├── DIH.Infrastructure/ # Data access, external services, ETL processes (.NET/Python)
+├── DIH.Presentation/ # React frontend
+```
+
+**Important**: ETL processes are located within the Infrastructure layer, following Clean Architecture principles.
+
+### Current Implementation
+- Only `DIH.Presentation` exists currently
+- All other layers will be added progressively
+- Use mock data services until real APIs are implemented
+
+## Frontend Rules (React/Next.js)
+
+### Component Guidelines
+- Use functional components with hooks exclusively
+- Implement "use client" directive for client-side components
+- Follow the existing patterns in `components/` directory
+- Use shadcn/ui components from `components/ui/`
+- Custom business components go in `components/` root
+
+### State Management Patterns
+- Use React Query for server state and caching
+- Use React hooks (useState, useReducer) for local state
+- Follow the service layer pattern: Component → Hook → Service → API
+- Custom hooks should be in `hooks/` directory with `use-` prefix
+
+### Data Flow Pattern
+```typescript
+// Component consumes data via custom hook
+const { data, isLoading, error } = useUsers()
+
+// Hook uses React Query with service
+export function useUsers() {
+  return useQuery({
+    queryKey: ['users'],
+    queryFn: usersApi.getUsers
+  })
+}
+
+// Service handles API calls
+export const usersApi = {
+  getUsers: async (): Promise<User[]> => { /* implementation */ }
+}
+```
+
+### Import Rules
+- Use `@/` path aliases for all imports
+- Import UI components from `@/components/ui/`
+- Import types from `@/types/`
+- Import services from `@/services/`
+- Import utilities from `@/lib/`
+
+### Styling Guidelines
+- Use Tailwind CSS utility classes exclusively
+- Follow the existing color scheme with CSS custom properties
+- Support dark/light mode using the theme provider
+- Use responsive design patterns (mobile-first)
+- Maintain consistency with existing component styles
+
+## Backend Rules (.NET - Future)
+
+### Clean Architecture Principles
+- Domain layer should have no external dependencies
+- Application layer coordinates between domain and infrastructure
+- Infrastructure handles data access and external services
+- API layer only handles HTTP concerns
+
+### Naming Conventions
+- Use PascalCase for classes, methods, and properties
+- Use camelCase for local variables and parameters
+- Prefix interfaces with 'I' (e.g., `IUserRepository`)
+- Use meaningful, descriptive names
+
+### Domain Modeling
+- Focus on ad network optimization domain concepts
+- Core entities: AdNetwork, AdFormat, Geography, DemandRule
+- Use value objects for concepts like eCPM, FillRate
+- Implement domain events for important business actions
+
+## ETL Rules (Python - Future)
+
+**Location**: ETL processes are located in `DIH.Infrastructure/ETL/` following Clean Architecture.
+
+### Target Ad Networks
+- **IronSource**: Primary focus network
+- **AdMob**: Google's ad network
+- **AppLovin**: Mobile advertising platform
+
+### Required Metrics (Daily Collection)
+- **eCPM**: Effective cost per mille
+- **FillRate**: Ad request fill percentage
+- **Revenue**: Total revenue generated
+- **CTR**: Click-through rate
+- **Impressions**: Total ad impressions
+
+### Code Structure
+- Follow PEP 8 style guidelines
+- Use type hints for all function parameters and return values
+- Implement proper error handling and logging
+- Structure ETL processes as modular, testable components
+- Each ad network should have its own ETL module
+
+### Data Processing Patterns
+- Use pandas for data manipulation
+- Implement data validation at ingestion points
+- Handle missing data gracefully
+- Log data quality metrics
+- Store all data in BigQuery on GCP
+- Implement daily scheduled data retrieval
+- Use proper authentication for ad network APIs
+
+## Cloud Infrastructure Rules (GCP)
+
+### Cloud Services
+- **Cloud Run**: Host .NET APIs and frontend applications
+- **Cloud Functions**: ETL job execution for ad network data retrieval
+- **Cloud Build**: CI/CD pipeline for automated deployments
+- **BigQuery**: Data warehouse for all metrics and analytics
+- **Cloud Scheduler**: Daily ETL job scheduling
+- **Secret Manager**: Store ad network API keys and credentials
+
+### Deployment Patterns
+- Create `cloudbuild.yaml` files for each service
+- Use `cloudrun.yaml` for service configuration
+- Implement proper environment variable management
+- Use least privilege IAM roles
+- Enable Cloud SQL Auth Proxy if needed
+
+### Configuration Files (Future)
+- `cloudbuild.yaml`: Build and deployment pipeline
+- `cloudrun.yaml`: Cloud Run service configuration
+- `requirements.txt`: Python dependencies for ETL functions
+- `Dockerfile`: Container configuration for .NET services
+
+## Domain-Specific Rules
+
+### Ad Network Optimization Context
+- Focus specifically on IronSource, AdMob, and AppLovin networks
+- Always consider eCPM (effective cost per mille) in calculations
+- Fill rate is critical for network performance
+- Geographic targeting affects network selection
+- Ad format compatibility must be validated
+- Daily metrics collection is mandatory for all networks
+
+### Business Logic Patterns
+- Implement demand rules as configurable business logic
+- Simulation results should include confidence metrics
+- Performance metrics need historical comparison
+- Alert systems should be severity-based
+
+## Testing Guidelines
+
+### Frontend Testing (Future)
+- Write unit tests for custom hooks
+- Test components with React Testing Library
+- Mock external API calls in tests
+- Test user interactions and accessibility
+
+### Backend Testing (Future)
+- Write unit tests for domain logic
+- Integration tests for data access
+- API tests for endpoint contracts
+- Test business rule validation
+
+## Error Handling
+
+### Frontend Error Patterns
+- Use React Query error states
+- Implement user-friendly error messages
+- Show loading states during async operations
+- Handle network failures gracefully
+
+### Backend Error Patterns (Future)
+- Use structured exception handling
+- Return appropriate HTTP status codes
+- Log errors with contextual information
+- Implement global error handling middleware
+
+## Performance Considerations
+
+### Frontend Performance
+- Lazy load components when appropriate
+- Use React.memo for expensive re-renders
+- Optimize bundle size with dynamic imports
+- Implement proper caching strategies
+
+### Backend Performance (Future)
+- Use async/await patterns consistently
+- Implement caching for frequently accessed data
+- Consider database query optimization
+- Use background jobs for heavy processing
+
+## Security Guidelines
+
+### General Security
+- Never commit sensitive information
+- Use environment variables for configuration
+- Implement proper input validation
+- Follow OWASP security practices
+
+### API Security (Future)
+- Implement proper authentication/authorization
+- Use HTTPS for all communications
+- Validate all input parameters
+- Implement rate limiting
+
+## Code Review Standards
+
+### Required Elements
+- Follow established patterns in the codebase
+- Include proper TypeScript types
+- Write self-documenting code
+- Handle edge cases and error scenarios
+- Consider mobile responsiveness for UI changes
+
+### Avoid These Patterns
+- Don't mix Spanish and English in code (use English)
+- Don't bypass the service layer pattern
+- Don't hard-code configuration values
+- Don't create components without proper typing
+- Don't ignore accessibility considerations
+
+## Development Workflow
+
+### Before Making Changes
+- Review existing patterns in the codebase
+- Check for similar implementations to maintain consistency
+- Consider the Clean Architecture boundaries
+- Ensure changes work across the planned technology stack
+
+### When Adding New Features
+- Create types first in appropriate `types/` files
+- Implement service layer with mock data initially
+- Build UI components following existing patterns
+- Add proper error handling and loading states
+- Consider future API integration requirements
